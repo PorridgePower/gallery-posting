@@ -60,11 +60,11 @@ class SaatchiArtwork:
 
     @price.setter
     def price(self, value):
-        if not isinstance(value, uint8):
+        if not isinstance(value, int):
             raise TypeError("Price must be a number")
         if value < 100:
             raise ValueError("For Saatchi price must be over 100$")
-        self.price = value
+        self._price = value
 
     @property
     def year(self):
