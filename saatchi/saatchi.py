@@ -7,7 +7,7 @@ from datetime import date
 import time
 
 category = 164  # always set "Painting" for me
-subject = 242  # unknown
+subject = 204  # 242 - absract, 204 - landscape
 mediums = ["Watercolor"]
 materials = ["Paper"]
 styles = ["Abstract"]
