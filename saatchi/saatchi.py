@@ -113,7 +113,8 @@ class SaatchiArtwork:
         if not isinstance(description, str):
             raise TypeError("Description must be a string")
         if len(description) < 50:
-            raise ValueError("Minimum characters for description still required 50")
+            raise ValueError(
+                "Minimum characters for description still required 50")
         self._art_description = description
 
     @property
@@ -192,7 +193,8 @@ class SaatchiSession:
 
     def _upload_img(self, local_path):
         files = {"Filedata": open(local_path, "rb")}
-        resp = self._session.post("https://upload.saatchiart.com/", files=files)
+        resp = self._session.post(
+            "https://upload.saatchiart.com/", files=files)
         if resp.status_code != 200:
             print(resp.text)
             return {}
