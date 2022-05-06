@@ -7,7 +7,7 @@ from datetime import date
 import time
 
 category = 164  # always set "Painting" for me
-subject = 242  # unknown
+subject = 204  # 242 - absract, 204 - landscape
 mediums = ["Watercolor"]
 materials = ["Paper"]
 styles = ["Abstract"]
@@ -60,11 +60,11 @@ class SaatchiArtwork:
 
     @price.setter
     def price(self, value):
-        if not isinstance(value, uint8):
+        if not isinstance(value, int):
             raise TypeError("Price must be a number")
         if value < 100:
             raise ValueError("For Saatchi price must be over 100$")
-        self.price = value
+        self._price = value
 
     @property
     def year(self):
@@ -113,10 +113,47 @@ class SaatchiArtwork:
         if not isinstance(description, str):
             raise TypeError("Description must be a string")
         if len(description) < 50:
-            raise ValueError("Minimum characters for description still required 50")
+            raise ValueError(
+                "Minimum characters for description still required 50")
         self._art_description = description
 
-    def initialize(self, title, height, width, keywords, description, year, price):
+    @property
+    def art_mediums(self):
+        return self._art_mediums
+
+    @art_mediums.setter
+    def art_mediums(self, words):
+        if not isinstance(words, list):
+            raise TypeError("Meduims must be a list")
+        if not len(words) > 0:
+            raise ValueError("Set at least 1 medium")
+        self._art_mediums = words
+
+    @property
+    def art_materials(self):
+        return self._art_materials
+
+    @art_materials.setter
+    def art_materials(self, words):
+        if not isinstance(words, list):
+            raise TypeError("Materials must be a list")
+        if not len(words) > 0:
+            raise ValueError("Set at least 1 material")
+        self._art_materials = words
+
+    @property
+    def art_styles(self):
+        return self._art_styles
+
+    @art_styles.setter
+    def art_styles(self, words):
+        if not isinstance(words, list):
+            raise TypeError("Styles must be a list")
+        if not len(words) > 0:
+            raise ValueError("Set at least 1 style")
+        self._art_styles = words
+
+    def initialize(self, title, height, width, keywords, description, year, price, mediums, materials, styles, subject):
         self.keywords = keywords
         self.year = year
         self.art_height = height
@@ -124,6 +161,10 @@ class SaatchiArtwork:
         self.art_title = title
         self.art_description = description
         self.art_price = price
+        self.art_mediums = mediums
+        self.art_materials = materials
+        self.art_styles = styles
+        self.art_subject = subject
 
 
 class SaatchiSession:
@@ -152,7 +193,8 @@ class SaatchiSession:
 
     def _upload_img(self, local_path):
         files = {"Filedata": open(local_path, "rb")}
-        resp = self._session.post("https://upload.saatchiart.com/", files=files)
+        resp = self._session.post(
+            "https://upload.saatchiart.com/", files=files)
         if resp.status_code != 200:
             print(resp.text)
             return {}
@@ -184,9 +226,9 @@ class SaatchiSession:
             "date_created": art.year,
             "category": category,
             "subject": subject,
-            "mediums": mediums,
-            "materials": materials,
-            "styles": styles,
+            "mediums": art.art_mediums,
+            "materials": art.art_materials,
+            "styles": art.art_styles,
             "keywords": art.keywords,
             "art_height": art.art_height,
             "art_width": art.art_width,
