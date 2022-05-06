@@ -47,7 +47,7 @@ def main():
 def find_main_image(directory):
     if not path.exists(directory):
         return ""
-    images = [f for f in listdir(directory) if path.join(
+    images = [f for f in sorted(listdir(directory)) if path.join(
         directory, f.lower()).endswith(".jpg")]
     print(images)
     for i in images:
