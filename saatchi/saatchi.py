@@ -55,16 +55,16 @@ class SaatchiArtwork:
         self._keywords = words
 
     @property
-    def price(self):
-        return self.price
+    def art_price(self):
+        return self._art_price
 
-    @price.setter
-    def price(self, value):
+    @art_price.setter
+    def art_price(self, value):
         if not isinstance(value, int):
             raise TypeError("Price must be a number")
         if value < 100:
             raise ValueError("For Saatchi price must be over 100$")
-        self._price = value
+        self._art_price = value
 
     @property
     def year(self):
