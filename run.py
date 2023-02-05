@@ -5,7 +5,6 @@ from saatchi.saatchi import SaatchiSession, SaatchiArtwork
 from config import Config
 from os import path, listdir
 from notion_exporter.notion_exporter import NotionExporter
-from saatchi.saatchi import SaatchiSession
 
 
 def main():
