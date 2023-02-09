@@ -12,7 +12,7 @@ using Notion database.
 
 The database (table) has the following structure:
 
-<img src="https://user-images.githubusercontent.com/62947325/217303497-a3da9eab-c521-4580-9f4a-7597f7235516.png" width="600" height="350">
+<img src="https://user-images.githubusercontent.com/62947325/217303497-a3da9eab-c521-4580-9f4a-7597f7235516.png" width="600" height="300">
 
 Each page includes common artwork's properties
 
