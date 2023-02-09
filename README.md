@@ -7,7 +7,7 @@ Tool for publishing artworks to online galleries
 
 ## How does it works
 
-This tool was designed to automate the upload of my artworks to Saatchi, DailyPaintworks and Artfinder
+This tool was designed to automate the upload of my artworks to [SaatchiArt](https://www.saatchiart.com/), [DailyPaintworks](https://www.dailypaintworks.com/) and [Artfinder](https://www.artfinder.com/#/)
 using Notion database with common info.
 
 The database (table) has the following structure:
