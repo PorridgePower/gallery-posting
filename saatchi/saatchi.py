@@ -5,9 +5,11 @@ from config import Config
 from os import path
 from datetime import date
 import time
+from PIL import Image
 
-category = 164  # always set "Painting" for me
-subject = 204  # 242 - absract, 204 - landscape
+
+category = "Painting"  # always set "Painting" for me
+subject = "Landscape"  # 242 - absract, 204 - landscape
 mediums = ["Watercolor"]
 materials = ["Paper"]
 styles = ["Abstract"]
@@ -20,6 +22,11 @@ artist_address_country_iso2 = "RU"
 artist_address_region = Config.ARTIST_CITY
 artist_address_zip = Config.ARTIST_ZIP
 artist_phone = Config.ARTIST_PHONE
+
+
+def get_num_pixels(filepath):
+    width, height = Image.open(filepath).size
+    return (width, height)
 
 
 class SaatchiArtwork:
@@ -113,8 +120,7 @@ class SaatchiArtwork:
         if not isinstance(description, str):
             raise TypeError("Description must be a string")
         if len(description) < 50:
-            raise ValueError(
-                "Minimum characters for description still required 50")
+            raise ValueError("Minimum characters for description still required 50")
         self._art_description = description
 
     @property
@@ -153,7 +159,20 @@ class SaatchiArtwork:
             raise ValueError("Set at least 1 style")
         self._art_styles = words
 
-    def initialize(self, title, height, width, keywords, description, year, price, mediums, materials, styles, subject):
+    def initialize(
+        self,
+        title,
+        height,
+        width,
+        keywords,
+        description,
+        year,
+        price,
+        mediums,
+        materials,
+        styles,
+        subject,
+    ):
         self.keywords = keywords
         self.year = year
         self.art_height = height
@@ -168,6 +187,8 @@ class SaatchiArtwork:
 
 
 class SaatchiSession:
+    UPLOAD_URL = "https://www.saatchiart.com"
+
     def __init__(self, username, password):
         self._user = username
         self._password = password
@@ -175,6 +196,13 @@ class SaatchiSession:
         self._session.headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:98.0) Gecko/20100101 Firefox/98.0"
         }
+
+    def get_error_msg(self, response):
+        errors = response.get("message")
+        if not errors:
+            errors = ". ".join(response.get("errorMessages"))
+
+        return errors if errors else "Unkown error!"
 
     def login(self):
         login_data = {
@@ -188,88 +216,97 @@ class SaatchiSession:
         )
         if resp.status_code != 200:
             print(resp.text)
-            return False
+            raise Exception(f"Login failed")
         return True
 
     def _upload_img(self, local_path):
-        files = {"Filedata": open(local_path, "rb")}
+        files = {"image": open(local_path, "rb")}
         resp = self._session.post(
-            "https://upload.saatchiart.com/", files=files)
-        if resp.status_code != 200:
-            print(resp.text)
-            return {}
+            f"{self.UPLOAD_URL}/easel_api/my-art/image/upload", files=files
+        )
         resp_json = json.loads(resp.text)
-        return resp_json
+        if resp.status_code != 200:
+            errors = self.get_error_msg(resp_json)
+            raise Exception(errors)
+        else:
+            return resp_json["payload"]["url"]
 
-    def upload_photo(self, local_path):
+    def upload_photo(self, local_path, title):
         if not path.exists(local_path):
-            print("File {lacal_path} does not exist!")
-            return False
-        upload_result = self._upload_img(local_path)
-        return upload_result
+            raise Exception("File {local_path} does not exist!")
+        image_url = self._upload_img(local_path)
+        min_dimension = min(get_num_pixels(local_path))
+        save_image_request = {
+            "crops": {
+                "square": {
+                    "x": 0,
+                    "y": 0,
+                    "width": min_dimension,
+                    "height": min_dimension,
+                },
+                "scale": {
+                    "x": 0,
+                    "y": 0,
+                    "width": min_dimension,
+                    "height": min_dimension,
+                },
+            },
+            "s3StagingPath": image_url,
+            "title": title,
+            "step": "image",
+        }
+        resp = self._session.post(
+            f"{self.UPLOAD_URL}/easel_api/my-art/upload",
+            json=save_image_request,
+        )
+        resp_json = json.loads(resp.text)
+        if resp.status_code != 200:
+            errors = self.get_error_msg(resp_json)
+            raise Exception(errors)
+        return resp_json["payload"]["artwork_id"]
+
+    def publish_art(self, ardwok_id):
+        resp = self._session.put(
+            f"{self.UPLOAD_URL}/easel_api/my-art/{ardwok_id}/publish"
+        )
+        resp_json = json.loads(resp.text)
+        if resp.status_code != 200:
+            errors = self.get_error_msg(resp_json)
+            raise Exception(errors)
+
+    def update_description(self, art, ardwok_id):
+        description = {
+            "artworkId": ardwok_id,
+            "category": category,
+            "description": art.art_description,
+            "dimensions": {
+                "width": art.art_width,
+                "height": art.art_height,
+                "depth": art.art_depth,
+            },
+            "keywords": art.keywords,
+            "materials": art.art_materials,
+            "mediums": art.art_mediums,
+            "styles": art.art_styles,
+            "subject": subject,
+            "yearProduced": art.year,
+            "step": "description",
+        }
+        resp = self._session.put(
+            f"{self.UPLOAD_URL}/easel_api/my-art/{ardwok_id}/update",
+            json=description,
+        )
+        resp_json = json.loads(resp.text)
+        if resp.status_code != 200:
+            errors = self.get_error_msg(resp_json)
+            raise Exception(errors)
 
     def upload_art(self, art, image):
-        self.uploaded_image_info = self.upload_photo(image)
-        upload_request = {
-            "weight_unit": "CENTIMETER",
-            "size_unit": "CENTIMETER",
-            "thumbnail": self.uploaded_image_info["server"]
-            + "?img="
-            + self.uploaded_image_info["thumbURL"],
-            "original_file": self.uploaded_image_info["originalFile"],
-            "sold_status": "avail",
-            "is_available_for_prints": False,
-            "is_copyright_owner": True,
-            "is_multipaneled": False,
-            "is_framed": False,
-            "is_banned": False,
-            "date_created": art.year,
-            "category": category,
-            "subject": subject,
-            "mediums": art.art_mediums,
-            "materials": art.art_materials,
-            "styles": art.art_styles,
-            "keywords": art.keywords,
-            "art_height": art.art_height,
-            "art_width": art.art_width,
-            "art_depth": art.art_depth,
-            "art_title": art.art_title,
-            "art_description": art.art_description,
-            "art_weight": art.art_weight,
-            "art_price": art.art_price,
-            "container_weight": 0,
-            "artist_address_street": artist_address_street,
-            "artist_address_unit": artist_address_unit,
-            "artist_address_city": artist_address_city,
-            "artist_address_country": artist_address_country,
-            "artist_address_region": artist_address_region,
-            "artist_address_zip": artist_address_zip,
-            "artist_phone": artist_phone,
-            "shipping_type": "rolled",
-            "canvas_wrap_color": 38,
-            "file_width": self.uploaded_image_info["originalWidth"],
-            "file_height": self.uploaded_image_info["originalHeight"],
-            "print_pricing_slider": 0,
-            "is_limited_light_artist": False,
-            "is_admin": False,
-            "productType": None,
-            "selectedOfferingDataMap": {},
-            "listed_not_for_sale": False,
-            "listed_no_prints": False,
-            "preferredLocale": "en-US",
-            "artist_address_country_iso2": artist_address_country_iso2,
-        }
-
-        time.sleep(10)
-        resp = self._session.post(
-            "https://www.saatchiart.com/upload/beta-submit",
-            data=json.dumps(upload_request),
-        )
-
-        if resp.status_code != 200:
+        try:
+            ardwok_id = self.upload_photo(image, art.art_title)
+            self.update_description(art, ardwok_id)
+            self.publish_art(ardwok_id)
+        except Exception as e:
+            print(e)
             return False
-        print(
-            "Uploaded art URL: https://www.saatchiart.com/%s"
-            % json.loads(resp.text)["redirect_url"]
-        )
         return True
