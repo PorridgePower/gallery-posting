@@ -11,7 +11,8 @@ class NotionExporter:
         self.client = NotionClient(token_v2=token)
 
     def get_collection(self, collection_id):
-        self.collection = self.client.get_collection(collection_id)
+        block = self.client.get_block(collection_id)
+        self.collection = self.client.get_collection(block.collection.id)
         sort_params = [
             {
                 "direction": "descending",
@@ -40,7 +41,7 @@ class NotionExporter:
         page = self.client.get_block("https://www.notion.so/" + page_id)
         artItem = Art(page.name)
         for child in page.children:
-            print("Persing %s block" % child.type)
+            print("Parsing %s block" % child.type)
             if child.type == "table":
                 properties = self.table_to_dict(child)
                 for key in properties:
@@ -59,8 +60,10 @@ class NotionExporter:
         for child in tableBlock.children:
             k = child.get("properties.xqir")
             v = child.get("properties.ln@{")
-            def normalize_filed(
-                field): return field[0][0] if field is not None else ""
+
+            def normalize_filed(field):
+                return field[0][0] if field is not None else ""
+
             v = normalize_filed(v)
             k = normalize_filed(k)
             print(k + " = " + v)
