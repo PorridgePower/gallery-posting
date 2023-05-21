@@ -1,4 +1,3 @@
-Pollow
+Pillow
+tk
 git+https://github.com/evertheylen/notion-py@91f3eb00064354a9a15e262c8e450862c1772309
-
-
