@@ -28,11 +28,21 @@ class NotionExporter:
         print(rows)
         return rows
 
+    def get_select_options(self, column_name):
+        prop = self.collection.get_schema_properties()
+        for p in prop:
+            if p.get("name") == column_name and p.get("type") == "multi_select":
+                return [i.get("value") for i in p.get("options")]
+
     def get_unposted(self, rows):
-        unposted = filtered_rows(lambda x: x.posted == "no", rows)
+        galleries_tags = self.get_select_options("Posted")
+        available_galleries_cnt = len(galleries_tags)
+        unposted = filtered_rows(
+            lambda x: len(x.posted) < available_galleries_cnt, rows
+        )
         artworks = []
         for row in unposted:
-            print("Name: '{}', and state: {}".format(row.name, row.posted))
+            print("Name: '{}', and posted state: {}".format(row.name, row.posted))
             artworks.append(self.parse_page(row.id.replace("-", "")))
             print()
         return artworks
@@ -49,6 +59,7 @@ class NotionExporter:
             if child.type == "text":
                 print(child.title)
                 artItem.add_property("description", child.title)
+            artItem.add_property("posted", page.posted)
         return artItem
 
     def export(self, table_id):
