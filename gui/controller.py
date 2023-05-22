@@ -1,4 +1,4 @@
-class Controller:
+class LoginController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
@@ -16,20 +16,14 @@ class Controller:
         except Exception as error:
             self.view.show_error(error)
 
-    # def save(self, email):
-    #     """
-    #     Save the email
-    #     :param email:
-    #     :return:
-    #     """
-    #     try:
-    #         # save the model
-    #         self.model.email = email
-    #         self.model.save()
 
-    #         # show a success message
-    #         self.view.show_success(f"The email {email} saved!")
+class ArtworksController:
+    def __init__(self, model, view):
+        self.model = model
+        self.view = view
 
-    #     except ValueError as error:
-    #         # show an error message
-    #         self.view.show_error(error)
+        try:
+            rows = model.getArtworks()
+            self.view.updateArtworks(rows)
+        except Exception as error:
+            self.view.show_error(error)

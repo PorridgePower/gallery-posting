@@ -10,6 +10,7 @@ class NotionLogin:
             self.password = password
         if token:
             self.token = token
+        self.notion = None
 
     @property
     def email(self):
@@ -55,3 +56,7 @@ class NotionLogin:
             print(e)
             raise e
         return
+
+    def getArtworks(self):
+        notionArts = self.notion.export("de2f7e3c37324c10bd3a611389604f2e")
+        return notionArts
