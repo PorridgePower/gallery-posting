@@ -59,6 +59,7 @@ class NotionExporter:
             if child.type == "text":
                 print(child.title)
                 artItem.add_property("description", child.title)
+            artItem.add_property("posted", page.posted)
         return artItem
 
     def export(self, table_id):
