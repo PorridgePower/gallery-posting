@@ -60,3 +60,6 @@ class NotionLogin:
     def getArtworks(self):
         notionArts = self.notion.export("de2f7e3c37324c10bd3a611389604f2e")
         return notionArts
+
+    def getMultiselectValues(self, name):
+        return self.notion.get_select_options(name)

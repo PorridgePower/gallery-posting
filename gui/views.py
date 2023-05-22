@@ -92,26 +92,25 @@ class LoginView(tk.Frame):
 
 
 class MainView(tk.Frame):
-    columns = ["Name", "Price"]
+    standing_columns = ["Name", "Price"]
 
-    def __init__(self, parent):
+    def __init__(
+        self,
+        parent,
+    ):
         super().__init__(parent)
 
         self.arts_frame = tk.LabelFrame(self, text="Your unpublished artworks")
         self.arts_frame.pack(fill="both", expand="yes", padx=20, pady=10)
         self.art_table = Treeview(
             self.arts_frame,
-            columns=self.columns,
+            columns=self.standing_columns,
             show="headings",
             height=6,
         )
-        print(list(range(len(self.columns))))
         self.art_table.pack(fill="both", expand="yes")
-        for name in self.columns:
-            print(self.columns.index(name))
-            self.art_table.heading(name, text=name)
-
-        # self.updateArtworks()
+        for name in self.standing_columns:
+            self.art_table.heading(name, text=name, anchor="center")
 
         self.folder_frame = tk.LabelFrame(self, text="Settings")
         self.folder_frame.pack(fill="both", expand="yes", padx=20, pady=10)
@@ -134,10 +133,48 @@ class MainView(tk.Frame):
         """
         self.controller = controller
 
-    def updateArtworks(self, arts):
+    def updateArtworks(self, arts, posted):
+        self.addColumns(posted, anchor="center")
+
         for art in arts:
+            posted_list = []
+            for p in posted:
+                if p in getattr(art, "posted"):
+                    posted_list.append("+")
+                else:
+                    posted_list.append("-")
             self.art_table.insert(
                 "",
                 "end",
-                values=[getattr(art, x.lower()) for x in self.columns],
+                values=[getattr(art, x.lower()) for x in self.standing_columns]
+                + posted_list,
             )
+
+    def addColumns(self, columns, **kwargs):
+        # Preserve current column headers and their settings
+        current_columns = {c: self.art_table.heading(c) for c in self.standing_columns}
+
+        # Update with new columns
+        self.art_table["columns"] = self.standing_columns + list(columns)
+        for key in columns:
+            self.art_table.heading(key, text=key, **kwargs)
+
+        # Set saved column values for the already existing columns
+        for key in current_columns:
+            # State is not valid to set with heading
+            state = current_columns[key].pop("state")
+            self.art_table.heading(key, **current_columns[key])
+
+    def show_error(self, message):
+        """
+        Show an error message in new messagebox
+        :param message:
+        :return:
+        """
+        dialog = tk.Toplevel(self)
+
+        label = tk.Label(dialog, text=message)
+        label.pack()
+
+        dialog.focus_set()
+        dialog.grab_set_global()

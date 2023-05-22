@@ -24,6 +24,10 @@ class ArtworksController:
 
         try:
             rows = model.getArtworks()
-            self.view.updateArtworks(rows)
+            posted_values = self.getAdditionalColumns("Posted")
+            self.view.updateArtworks(rows, posted_values)
         except Exception as error:
             self.view.show_error(error)
+
+    def getAdditionalColumns(self, name):
+        return self.model.getMultiselectValues(name)
