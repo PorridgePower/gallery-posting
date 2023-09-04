@@ -7,8 +7,8 @@ def filtered_rows(filter_func, rows):
 
 
 class NotionExporter:
-    def __init__(self, token):
-        self.client = NotionClient(token_v2=token)
+    def __init__(self, *args, **kwargs):
+        self.client = NotionClient(*args, **kwargs)
 
     def get_collection(self, collection_id):
         block = self.client.get_block(collection_id)
@@ -25,7 +25,6 @@ class NotionExporter:
         except Exception as e:
             print(e)
             return []
-        print(rows)
         return rows
 
     def get_select_options(self, column_name):
@@ -50,6 +49,7 @@ class NotionExporter:
     def parse_page(self, page_id):
         page = self.client.get_block("https://www.notion.so/" + page_id)
         artItem = Art(page.name)
+        artItem.add_property("page_id", page_id)
         for child in page.children:
             print("Parsing %s block" % child.type)
             if child.type == "table":
@@ -82,6 +82,14 @@ class NotionExporter:
                 continue
             prop_dict[k] = v
         return prop_dict
+
+    def update_label(self, art, value):
+        row = self.client.get_block(art.page_id)
+        for prop in row.schema:
+            if prop["name"] == "Posted":
+                art.posted.append(value)
+                row.set_property(prop["id"], art.posted)
+                break
 
 
 class Art:

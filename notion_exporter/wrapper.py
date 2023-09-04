@@ -2,15 +2,10 @@ import re
 from notion_exporter.notion_exporter import NotionExporter
 
 
-class NotionLogin:
-    def __init__(self, email=None, password=None, token=None):
-        if email:
-            self.email = email
-        if password:
-            self.password = password
-        if token:
-            self.token = token
-        self.notion = None
+class NotionClient:
+    def __init__(self):
+        self.__email = self.__password = self.__token = None
+        self._connection = None
 
     @property
     def email(self):
@@ -44,6 +39,18 @@ class NotionLogin:
         else:
             raise ValueError(f"Invalid token: {value}")
 
+    @property
+    def password(self):
+        return self.__password
+
+    @password.setter
+    def password(self, value):
+        self.__password = value
+
+    def isActive(self):
+        if self._connection is not None:
+            return True
+
     def login(self):
         """
         Login to Notion
@@ -51,15 +58,22 @@ class NotionLogin:
         """
         # here we should connect
         try:
-            self.notion = NotionExporter(self.token)
+            if self.token:
+                self._connection = NotionExporter(token_v2=self.token)
+            elif self.email and self.password:
+                self._connection = NotionExporter(
+                    email=self.email, password=self.password
+                )
         except Exception as e:
-            print(e)
-            raise e
+            raise Exception("Login failed!")
         return
 
-    def getArtworks(self):
-        notionArts = self.notion.export("de2f7e3c37324c10bd3a611389604f2e")
+    def getArtworks(self, db_id):
+        notionArts = self._connection.export(db_id)
         return notionArts
 
     def getMultiselectValues(self, name):
-        return self.notion.get_select_options(name)
+        return self._connection.get_select_options(name)
+
+    def updateArtworkState(self, art, value):
+        self._connection.update_label(art, value)
